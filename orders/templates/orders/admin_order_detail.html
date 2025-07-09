@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Order Detail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen">
+
+  <div class="max-w-4xl mx-auto py-10 px-4">
+    <h1 class="text-3xl font-bold text-[#00224D] mb-8">Order #{{ order.id }} Details</h1>
+
+    <!-- Order Info -->
+    <div class="bg-white border border-gray-200 rounded-2xl shadow p-6 mb-8">
+      <div class="space-y-2 text-sm">
+        <p><span class="font-medium text-gray-700">User Email:</span> {{ order.user.email }}</p>
+        <p><span class="font-medium text-gray-700">Total Amount:</span> ${{ order.total_amount }}</p>
+        <p><span class="font-medium text-gray-700">Order Date:</span> {{ order.order_date|date:"Y-m-d H:i" }}</p>
+      </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="bg-white border border-gray-200 rounded-2xl shadow p-6">
+      <h2 class="text-xl font-semibold text-[#00224D] mb-4">Ordered Products</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full table-auto text-sm border border-gray-200">
+          <thead class="bg-gray-100 text-gray-700">
+            <tr>
+              <th class="px-4 py-2 text-left">Product</th>
+              <th class="px-4 py-2 text-right">Quantity</th>
+              <th class="px-4 py-2 text-right">Unit Price</th>
+              <th class="px-4 py-2 text-right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for item in order_items %}
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-2">{{ item.product.product_name }}</td>
+                <td class="px-4 py-2 text-right">{{ item.quantity }}</td>
+                <td class="px-4 py-2 text-right">${{ item.unit_price }}</td>
+                <td class="px-4 py-2 text-right">${{ item.unit_price|floatformat:2|add:"0"|floatformat:2 }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Back Link -->
+    <div class="mt-8 text-sm">
+      <a href="{% url 'admin_order_list' %}" class="text-[#A0153E] hover:underline font-medium">
+        ← Back to Order List
+      </a>
+    </div>
+  </div>
+
+</body>
+</html>

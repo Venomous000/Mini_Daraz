@@ -1,0 +1,129 @@
+{% extends 'base/user_base.html' %}
+{% block title %}Checkout - Cart{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-6">
+  <h2 class="text-2xl font-bold mb-6 text-[#00224D]">Checkout - Cart</h2>
+
+  {% if messages %}
+    <div class="mb-4">
+      {% for message in messages %}
+        <div class="px-4 py-2 rounded text-white font-medium
+          {% if message.tags == 'success' %} bg-green-600
+          {% elif message.tags == 'error' %} bg-red-600
+          {% else %} bg-blue-600 {% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if cart_items or session_cart_items %}
+    <!-- 🛒 Product Table -->
+    <div class="overflow-x-auto mb-6">
+      <table class="min-w-full bg-white text-sm text-gray-800 border border-gray-200 rounded">
+        <thead class="bg-gray-100 text-left">
+          <tr>
+            <th class="px-4 py-2 border-b">Product</th>
+            <th class="px-4 py-2 border-b">Unit Price</th>
+            <th class="px-4 py-2 border-b">Quantity</th>
+            <th class="px-4 py-2 border-b">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cart_items %}
+          <tr class="hover:bg-gray-50 border-b">
+            <td class="px-4 py-2">{{ item.product.product_name }}</td>
+            <td class="px-4 py-2">${{ item.unit_price }}</td>
+            <td class="px-4 py-2">{{ item.quantity }}</td>
+            <td class="px-4 py-2">${{ item.total_price|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+
+          {% for item in session_cart_items %}
+          <tr class="hover:bg-gray-50 border-b">
+            <td class="px-4 py-2">{{ item.product.product_name }}</td>
+            <td class="px-4 py-2">${{ item.product.price_per_piece }}</td>
+            <td class="px-4 py-2">{{ item.quantity }}</td>
+            <td class="px-4 py-2">${{ item.subtotal|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Total -->
+    <h3 class="text-xl font-semibold text-gray-800 mb-6">
+      Total Price: ${{ total_price|floatformat:2 }}
+    </h3>
+
+    <!-- Form -->
+    <form method="post">
+      {% csrf_token %}
+
+      {% if user_type == "logged_in" %}
+        <!-- Logged-in: Saved Address -->
+        <h4 class="text-lg font-semibold mb-2">Choose a Saved Address:</h4>
+        {% for address in addresses %}
+          <label class="block p-3 border rounded mb-2 bg-white hover:border-[#A0153E]">
+            <input type="radio" name="selected_address" value="{{ address.id }}" class="mr-2">
+            {{ address.street_address }}, {{ address.city }}, {{ address.province }}, {{ address.country }} - {{ address.zip_code }}
+          </label>
+        {% empty %}
+          <p class="text-sm text-gray-500 mb-4">You have no saved addresses yet.</p>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Guest Info / Add New Address -->
+      <div class="mt-6 bg-gray-100 p-4 rounded">
+        <h4 class="text-lg font-semibold mb-3">
+          {% if user_type == "guest" %}
+            Enter Your Shipping Details:
+          {% else %}
+            Or Add New Address:
+          {% endif %}
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {% if user_type == "guest" %}
+            <input type="text" name="name" placeholder="Full Name" required class="border px-3 py-2 rounded">
+            <input type="email" name="email" placeholder="Email" required class="border px-3 py-2 rounded">
+            <input type="text" name="phone" placeholder="Phone" required class="border px-3 py-2 rounded">
+          {% endif %}
+          <input type="text" name="street_address" placeholder="Street Address" class="border px-3 py-2 rounded">
+          <input type="text" name="city" placeholder="City" class="border px-3 py-2 rounded">
+          <input type="text" name="province" placeholder="Province" class="border px-3 py-2 rounded">
+          <input type="text" name="country" placeholder="Country" class="border px-3 py-2 rounded">
+          <input type="text" name="zip_code" placeholder="ZIP Code" class="border px-3 py-2 rounded">
+        </div>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="mb-4 mt-6">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Select Payment Method</label>
+        <div class="flex items-center space-x-4">
+          <label class="flex items-center">
+            <input type="radio" name="payment_method" value="cod" class="mr-2" checked>
+            Cash on Delivery
+          </label>
+          <label class="flex items-center">
+            <input type="radio" name="payment_method" value="online" class="mr-2">
+            Online Payment
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="mt-6 bg-[#B6F500] text-black font-semibold px-4 py-2 rounded hover:bg-lime-400">
+        Place Order
+      </button>
+    </form>
+
+  {% else %}
+    <p class="text-center text-gray-600">Your cart is empty.</p>
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{% url 'view_cart' %}" class="text-[#5D0E41] hover:underline font-medium text-sm">← Back to Cart</a>
+  </div>
+</div>
+{% endblock %}

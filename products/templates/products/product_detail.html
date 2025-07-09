@@ -1,0 +1,72 @@
+{% extends 'base/user_base.html' %}
+{% block title %}{{ product.product_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
+
+  <!-- Product Name -->
+  <div class="flex justify-between items-start mb-2">
+    <h2 class="text-3xl font-bold text-[#00224D]">
+      {{ product.product_name }}
+    </h2>
+
+    <!-- Wishlist Button -->
+    {% if product.id in wishlist_product_ids %}
+      <a href="{% url 'remove_from_wishlist' product.id %}?next={{ request.path }}" title="Remove from wishlist">
+        <span class="text-[#FF204E] text-xl hover:opacity-80">❤️</span>
+      </a>
+    {% else %}
+      <a href="{% url 'add_to_wishlist' product.id %}?next={{ request.path }}" title="Add to wishlist">
+        <span class="text-gray-400 text-xl hover:text-[#A0153E]">🤍</span>
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Product Description -->
+  <p class="text-gray-700 text-base mb-6 leading-relaxed">
+    {{ product.product_description }}
+  </p>
+
+  <!-- Image Gallery -->
+  <div class="mb-6">
+    {% if product.images.all %}
+      <div class="flex flex-wrap gap-4">
+        {% for image in product.images.all %}
+          <a href="{{ image.image.url }}" target="_blank"
+             class="block w-32 h-32 border border-gray-300 rounded-lg overflow-hidden hover:shadow-lg hover:scale-105 transform transition">
+            <img src="{{ image.image.url }}" alt="Image of {{ product.product_name }}"
+                 class="object-cover w-full h-full" />
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-gray-400 italic">No images available.</p>
+    {% endif %}
+  </div>
+
+  <!-- Product Info -->
+  <p class="text-gray-800 text-sm mb-1">
+    <span class="font-semibold">Stock:</span> {{ product.stock_quantity }}
+  </p>
+  <p class="text-[#5D0E41] text-2xl font-bold mb-6">
+    Price: ${{ product.price_per_piece }}
+  </p>
+
+  <!-- Action Buttons -->
+  <div class="flex flex-wrap gap-4 mb-6">
+    <a href="{% url 'buy_now' product.id %}"
+       class="bg-[#B6F500] hover:bg-lime-400 text-[#00224D] font-semibold px-6 py-3 rounded-lg shadow transition">
+      Buy Now
+    </a>
+    <a href="{% url 'add_to_cart' product.id %}?next={{ request.path }}"
+       class="bg-[#FF204E] hover:bg-[#A0153E] text-white font-semibold px-6 py-3 rounded-lg shadow transition">
+      Add to Cart
+    </a>
+  </div>
+
+  <!-- Back Link -->
+  <a href="{% url 'home' %}" class="text-indigo-600 hover:underline font-medium text-sm">
+    ← Back to Products
+  </a>
+</div>
+{% endblock %}

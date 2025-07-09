@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Order Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen">
+
+  <div class="max-w-7xl mx-auto py-10 px-4">
+    <h1 class="text-3xl font-bold text-[#00224D] mb-8">Order Management</h1>
+
+    <!-- Filter Form -->
+    <form method="get" action="{% url 'admin_order_list' %}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 bg-white p-6 rounded-2xl shadow border border-gray-200 mb-8">
+      <input type="text" name="email" value="{{ email_query }}" placeholder="User Email"
+             class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A0153E] focus:outline-none">
+      <input type="text" name="city" value="{{ city_query }}" placeholder="City"
+             class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A0153E] focus:outline-none">
+      <input type="text" name="province" value="{{ province_query }}" placeholder="Province"
+             class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A0153E] focus:outline-none">
+      <input type="text" name="country" value="{{ country_query }}" placeholder="Country"
+             class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A0153E] focus:outline-none">
+      <input type="text" name="zip_code" value="{{ zip_query }}" placeholder="ZIP Code"
+             class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A0153E] focus:outline-none">
+      <button type="submit"
+              class="bg-[#FF204E] hover:bg-[#A0153E] text-white font-semibold px-4 py-2 rounded transition w-full">
+        Search
+      </button>
+    </form>
+
+    <!-- Orders Table -->
+    <div class="overflow-x-auto bg-white border border-gray-200 rounded-2xl shadow">
+      <table class="min-w-full text-sm text-left text-gray-800">
+        <thead class="bg-gray-100 text-[#00224D] font-semibold text-sm">
+          <tr>
+            <th class="px-4 py-3 border-b">Order ID</th>
+            <th class="px-4 py-3 border-b">User Email</th>
+            <th class="px-4 py-3 border-b">Total Amount</th>
+            <th class="px-4 py-3 border-b">Date</th>
+            <th class="px-4 py-3 border-b text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for order in orders %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2">{{ order.id }}</td>
+              <td class="px-4 py-2">{{ order.user.email }}</td>
+              <td class="px-4 py-2">${{ order.total_amount }}</td>
+              <td class="px-4 py-2">{{ order.order_date|date:"Y-m-d H:i" }}</td>
+              <td class="px-4 py-2 text-center">
+                <a href="{% url 'admin_order_detail' order.id %}" class="text-[#5D0E41] hover:underline font-medium">
+                  View
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-gray-500 py-8 italic">
+                No orders found for the selected criteria.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</body>
+</html>

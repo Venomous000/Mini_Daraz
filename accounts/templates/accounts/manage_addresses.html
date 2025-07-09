@@ -1,0 +1,41 @@
+{% extends 'base/user_base.html' %}
+{% block title %}Manage Addresses{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+  <h2 class="text-2xl font-bold text-gray-900 mb-6">Your Saved Addresses</h2>
+
+  {% if addresses %}
+    <div class="space-y-4">
+      {% for address in addresses %}
+        <div class="bg-white p-5 rounded-2xl shadow-md border border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-start">
+          <div class="text-gray-800">
+            <p class="font-semibold text-lg text-gray-900">{{ address.full_name }}</p>
+            <p class="text-sm mt-1 text-gray-600">
+              {{ address.street_address }}, {{ address.city }}, {{ address.province }}, {{ address.country }} - {{ address.zip_code }}
+            </p>
+            <p class="text-sm text-gray-500 mt-1">Phone: {{ address.phone }}</p>
+          </div>
+          <div class="mt-4 sm:mt-0 sm:text-right space-y-2">
+            <a href="{% url 'edit_address' address.id %}" class="inline-block text-indigo-500 font-medium hover:underline">
+              Edit
+            </a>
+            <a href="{% url 'delete_address' address.id %}" class="inline-block text-rose-500 font-medium hover:underline">
+              Delete
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center text-gray-500 mt-8">You haven’t saved any addresses yet.</div>
+  {% endif %}
+
+  <div class="mt-8 text-center">
+    <a href="{% url 'add_address' %}"
+       class="inline-block bg-teal-500 hover:bg-teal-600 text-white font-semibold px-6 py-2.5 rounded-xl shadow transition">
+      Add New Address
+    </a>
+  </div>
+</div>
+{% endblock %}

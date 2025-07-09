@@ -1,0 +1,16 @@
+from .address_views import manage_addresses, add_address, edit_address, delete_address
+from .user_views import user_registration, user_login, user_logout, user_profile
+from .admin_views import superadmin_login_view, superadmin_logout_view, admin_dashboard
+__all__ = [
+    'manage_addresses',
+    'add_address',
+    'edit_address',
+    'delete_address',
+    'user_registration',
+    'user_login',
+    'user_logout',
+    'user_profile',
+    'superadmin_login_view',
+    'superadmin_logout_view',
+    'admin_dashboard'
+]

@@ -1,0 +1,78 @@
+{% extends 'base/user_base.html' %}
+{% block title %}Your Cart{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-8 px-4">
+  <h2 class="text-2xl font-bold mb-6 text-[#00224D]">Your Cart</h2>
+  {% if not user.is_authenticated %}
+    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded mb-4">
+      <strong>Note:</strong> You must <a href="{% url 'login' %}" class="underline text-blue-600">login</a> to save your cart.
+    </div>
+  {% endif %}
+  {% if cart_items %}
+    <div class="overflow-x-auto rounded-xl shadow border">
+      <table class="min-w-full bg-white text-sm text-gray-700">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-3 text-left border-b">Product</th>
+            <th class="px-4 py-3 text-left border-b">Quantity</th>
+            <th class="px-4 py-3 text-left border-b">Total</th>
+            <th class="px-4 py-3 text-left border-b">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cart_items %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 border-b flex items-center space-x-4">
+              {% if item.product.get_main_image_url %}
+                <img src="{{ item.product.get_main_image_url }}" alt="{{ item.product.product_name }}" class="w-14 h-14 rounded object-cover border">
+              {% else %}
+                <div class="w-14 h-14 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">No Image</div>
+              {% endif %}
+              <span>{{ item.product.product_name }}</span>
+            </td>
+
+            <td class="px-4 py-3 border-b">
+              <form action="{% url 'update_cart_item' item.id %}" method="post" class="flex items-center space-x-2">
+                {% csrf_token %}
+                <input type="number" name="quantity" min="1" max="{{ item.product.stock_quantity }}"
+                       value="{{ item.quantity }}" class="w-20 border rounded px-2 py-1 text-center">
+                <button type="submit" class="bg-[#A0153E] text-white px-3 py-1 rounded hover:bg-[#5D0E41]">Update</button>
+              </form>
+            </td>
+
+            <td class="px-4 py-3 border-b">
+              ${{ item.total_price|floatformat:2 }}
+            </td>
+
+            <td class="px-4 py-3 border-b">
+              <form action="{% url 'remove_from_cart' item.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="bg-[#FF204E] text-white px-3 py-1 rounded hover:bg-red-700">Remove</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Total & Checkout -->
+    <div class="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <h3 class="text-xl font-semibold text-[#00224D]">
+        Total: ${{ total_price|floatformat:2 }}
+      </h3>
+      <a href="{% url 'cart_checkout' %}" class="bg-[#B6F500] text-[#00224D] px-6 py-2 rounded font-medium hover:bg-lime-400 transition">
+        Proceed to Checkout
+      </a>
+    </div>
+  {% else %}
+    <div class="text-center text-gray-500 italic mt-8">
+      Your cart is empty.
+      <div class="mt-4">
+        <a href="{% url 'home' %}" class="text-blue-600 hover:underline">← Browse Products</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

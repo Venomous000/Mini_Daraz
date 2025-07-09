@@ -1,0 +1,37 @@
+{% extends 'base/user_base.html' %}
+{% block title %}Your Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto mt-10 bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-gray-200">
+  <h2 class="text-2xl font-bold text-[#00224D] mb-6">Your Profile</h2>
+
+  <div class="space-y-4 text-gray-700">
+    <p>
+      <span class="font-semibold text-gray-900">Full Name:</span> {{ user.name }}
+    </p>
+    <p>
+      <span class="font-semibold text-gray-900">Email Address:</span> {{ user.email }}
+    </p>
+    <p>
+      <span class="font-semibold text-gray-900">Phone Number:</span> {{ user.phone }}
+    </p>
+  </div>
+
+  <div class="mt-8 flex flex-col sm:flex-row flex-wrap gap-4">
+    <a href="{% url 'edit_profile' %}"
+       class="w-full sm:w-auto bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-lg shadow text-center transition">
+      Edit Profile
+    </a>
+
+    <a href="{% url 'change_password' %}"
+       class="w-full sm:w-auto bg-rose-500 hover:bg-rose-600 text-white px-5 py-2 rounded-lg shadow text-center transition">
+      Change Password
+    </a>
+
+    <a href="{% url 'manage_addresses' %}"
+       class="w-full sm:w-auto bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg shadow text-center transition">
+      Manage Addresses
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-start py-10 px-4">
+
+  <!-- Header -->
+  <header class="w-full max-w-6xl mb-10 text-center">
+    <h1 class="text-4xl font-bold text-gray-900">Admin Dashboard</h1>
+  </header>
+
+  <!-- Dashboard Cards -->
+  <main class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <!-- Manage Products -->
+    <a href="{% url 'admin_product_list' %}" class="bg-white border border-gray-200 hover:shadow-xl rounded-xl p-6 transition transform hover:scale-105 group">
+      <div class="flex items-center space-x-4">
+        <div class="text-4xl text-rose-500"></div>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 group-hover:text-rose-600">Manage Products</h2>
+          <p class="text-sm text-gray-600">Add, edit, or remove products</p>
+        </div>
+      </div>
+    </a>
+
+    <!-- Manage Orders -->
+    <a href="{% url 'admin_order_list' %}" class="bg-white border border-gray-200 hover:shadow-xl rounded-xl p-6 transition transform hover:scale-105 group">
+      <div class="flex items-center space-x-4">
+        <div class="text-4xl text-teal-500"></div>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 group-hover:text-teal-600">Manage Orders</h2>
+          <p class="text-sm text-gray-600">Search, view, and manage orders</p>
+        </div>
+      </div>
+    </a>
+
+    <!-- Logout -->
+    <a href="{% url 'superadmin_logout' %}" class="bg-white border border-gray-200 hover:shadow-xl rounded-xl p-6 transition transform hover:scale-105 group">
+      <div class="flex items-center space-x-4">
+        <div class="text-4xl text-indigo-500"></div>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">Logout</h2>
+          <p class="text-sm text-gray-600">Exit the admin panel</p>
+        </div>
+      </div>
+    </a>
+
+  </main>
+</body>
+</html>

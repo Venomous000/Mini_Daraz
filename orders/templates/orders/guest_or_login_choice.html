@@ -1,0 +1,23 @@
+{% extends 'base/user_base.html' %}
+{% block title %}Continue Checkout{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-20 bg-white p-8 rounded-2xl shadow border border-gray-200 text-center">
+  <h2 class="text-2xl font-bold text-[#00224D] mb-6">How would you like to continue?</h2>
+
+  <form method="get" action="{% url 'login' %}" class="mb-4">
+    <input type="hidden" name="next" value="{% url 'buy_now' product_id %}">
+    <button type="submit" class="w-full bg-[#00224D] hover:bg-[#5D0E41] text-white py-2 px-4 rounded font-semibold transition">
+      Login to Continue
+    </button>
+  </form>
+
+  <a href="{% url 'guest_buy_now' product_id %}" class="block w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded font-semibold transition mb-4">
+    Continue as Guest
+  </a>
+
+  <a href="{% url 'home' %}" class="text-[#A0153E] hover:underline text-sm font-medium">
+    ← Cancel & Return to Home
+  </a>
+</div>
+{% endblock %}
