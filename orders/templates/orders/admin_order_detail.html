@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,42 +9,66 @@
 </head>
 <body class="bg-gray-100 text-gray-800 min-h-screen">
 
-  <div class="max-w-4xl mx-auto py-10 px-4">
+  <div class="max-w-5xl mx-auto py-10 px-4">
     <h1 class="text-3xl font-bold text-[#00224D] mb-8">Order #{{ order.id }} Details</h1>
 
-    <!-- Order Info -->
-    <div class="bg-white border border-gray-200 rounded-2xl shadow p-6 mb-8">
-      <div class="space-y-2 text-sm">
-        <p><span class="font-medium text-gray-700">User Email:</span> {{ order.user.email }}</p>
-        <p><span class="font-medium text-gray-700">Total Amount:</span> ${{ order.total_amount }}</p>
-        <p><span class="font-medium text-gray-700">Order Date:</span> {{ order.order_date|date:"Y-m-d H:i" }}</p>
-      </div>
+    <!-- Order Summary -->
+    <div class="bg-white border border-gray-200 rounded-xl shadow p-6 mb-8 space-y-4">
+      <p class="text-sm"><span class="font-semibold text-gray-700">Order Date:</span> {{ order.order_date|date:"Y-m-d H:i" }}</p>
+      <p class="text-sm"><span class="font-semibold text-gray-700">Payment Method:</span> {{ order.get_payment_method_display }}</p>
+      <p class="text-sm">
+        <span class="font-semibold text-gray-700">Payment Status:</span>
+        <span class="{{ order.paid|yesno:'text-green-600,text-yellow-600' }}">
+          {{ order.paid|yesno:'Paid,Unpaid' }}
+        </span>
+      </p>
+      <p class="text-sm">
+        <span class="font-semibold text-gray-700">Order Placed By:</span>
+        {% if order.user %}
+          <span class="text-[#00224D]">User - {{ order.user.email }}</span>
+        {% elif order.guest %}
+          <span class="text-[#5D0E41]">Guest - {{ order.guest.name }} ({{ order.guest.email }})</span>
+        {% else %}
+          Unknown
+        {% endif %}
+      </p>
+
+      {% if order.address %}
+        <div class="text-sm text-gray-700">
+          <span class="font-semibold block">Shipping Address:</span>
+          {{ order.address.full_name }}<br>
+          {{ order.address.street_address }}<br>
+          {{ order.address.city }}, {{ order.address.province }}<br>
+          {{ order.address.country }} - {{ order.address.zip_code }}<br>
+          Phone: {{ order.address.phone }}
+        </div>
+      {% endif %}
     </div>
 
     <!-- Order Items -->
-    <div class="bg-white border border-gray-200 rounded-2xl shadow p-6">
+    <div class="bg-white border border-gray-200 rounded-xl shadow p-6">
       <h2 class="text-xl font-semibold text-[#00224D] mb-4">Ordered Products</h2>
-      <div class="overflow-x-auto">
-        <table class="w-full table-auto text-sm border border-gray-200">
-          <thead class="bg-gray-100 text-gray-700">
-            <tr>
-              <th class="px-4 py-2 text-left">Product</th>
-              <th class="px-4 py-2 text-right">Quantity</th>
-              <th class="px-4 py-2 text-right">Unit Price</th>
-              <th class="px-4 py-2 text-right">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {% for item in order_items %}
-              <tr class="hover:bg-gray-50">
-                <td class="px-4 py-2">{{ item.product.product_name }}</td>
-                <td class="px-4 py-2 text-right">{{ item.quantity }}</td>
-                <td class="px-4 py-2 text-right">${{ item.unit_price }}</td>
-                <td class="px-4 py-2 text-right">${{ item.unit_price|floatformat:2|add:"0"|floatformat:2 }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="space-y-4">
+        {% for item in order_items %}
+          <div class="flex items-center border-b pb-4 mb-4 space-x-4">
+            {% if item.product.images.first %}
+              <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.product_name }}"
+                   class="w-16 h-16 rounded object-cover border">
+            {% endif %}
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-800">{{ item.product.product_name }}</p>
+              <p class="text-xs text-gray-500">Qty: {{ item.quantity }} × ${{ item.unit_price }}</p>
+            </div>
+            <div class="text-sm font-semibold text-gray-800">
+              ${{ item.total_price }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Total -->
+      <div class="text-right mt-6 border-t pt-4 text-lg font-semibold text-[#00224D]">
+        Total: ${{ order.total_amount }}
       </div>
     </div>
 

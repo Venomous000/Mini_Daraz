@@ -5,7 +5,7 @@ from orders.models import Order
 @superadmin_required
 def admin_order_list(request):
     filters = {
-        'user_email': request.GET.get('q'),
+        'user_email': request.GET.get('email'),
         'city': request.GET.get('city'),
         'province': request.GET.get('province'),
         'country': request.GET.get('country'),

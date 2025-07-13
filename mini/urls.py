@@ -33,7 +33,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls.user_urls')),
 
     # ADMIN (Superadmin) login, logout, dashboard
-    path('adminpanel/', include('accounts.urls.admin_urls')),  # <-- This is now clean and separate
+    path('', include('accounts.urls.admin_urls')),  # <-- This is now clean and separate
 
     # ADDRESS MANAGEMENT (used by both user and during checkout)
     path('accounts/addresses/', include('accounts.urls.address_urls')),

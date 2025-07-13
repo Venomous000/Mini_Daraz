@@ -56,3 +56,9 @@ class Product(models.Model):
         else:
             # New product — normal save
             super().save(*args, **kwargs)
+            
+    def calculate_subtotal(self, quantity):
+        return self.price_per_piece * quantity
+
+    def is_stock_available(self, quantity):
+        return self.stock_quantity >= quantity

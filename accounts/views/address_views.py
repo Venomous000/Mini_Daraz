@@ -3,11 +3,29 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from accounts.models.address_model import Address
 from accounts.forms import AddressForm
+from itertools import groupby
+
 
 @login_required
 def manage_addresses(request):
-    addresses = request.user.addresses.all()
-    return render(request, 'accounts/manage_addresses.html', {'addresses': addresses})
+    addresses = list(request.user.addresses.all().order_by(
+        'full_name', 'street_address', 'zip_code', 'city', 'province', 'country', 'phone'
+    ))
+
+    # Remove perfect duplicates manually
+    unique_addresses = []
+    seen = set()
+    for addr in addresses:
+        key = (
+            addr.full_name, addr.street_address, addr.zip_code,
+            addr.city, addr.province, addr.country, addr.phone
+        )
+        if key not in seen:
+            seen.add(key)
+            unique_addresses.append(addr)
+
+    return render(request, 'accounts/manage_addresses.html', {'addresses': unique_addresses})
+
 
 
 @login_required
