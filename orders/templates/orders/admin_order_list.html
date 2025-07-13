@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,7 +13,7 @@
     <h1 class="text-3xl font-bold text-[#00224D] mb-8">Order Management</h1>
 
     <!-- Filter Form -->
-    <form method="get" action="{% url 'admin_order_list' %}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 bg-white p-6 rounded-2xl shadow border border-gray-200 mb-8">
+    <form method="get" action="{% url 'admin_order_list' %}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 bg-white p-6 rounded-2xl shadow border border-gray-200 mb-10">
       <input type="text" name="email" value="{{ email_query }}" placeholder="User Email"
              class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A0153E] focus:outline-none">
       <input type="text" name="city" value="{{ city_query }}" placeholder="City"
@@ -29,42 +30,72 @@
       </button>
     </form>
 
-    <!-- Orders Table -->
-    <div class="overflow-x-auto bg-white border border-gray-200 rounded-2xl shadow">
-      <table class="min-w-full text-sm text-left text-gray-800">
-        <thead class="bg-gray-100 text-[#00224D] font-semibold text-sm">
-          <tr>
-            <th class="px-4 py-3 border-b">Order ID</th>
-            <th class="px-4 py-3 border-b">User Email</th>
-            <th class="px-4 py-3 border-b">Total Amount</th>
-            <th class="px-4 py-3 border-b">Date</th>
-            <th class="px-4 py-3 border-b text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {% for order in orders %}
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-2">{{ order.id }}</td>
-              <td class="px-4 py-2">{{ order.user.email }}</td>
-              <td class="px-4 py-2">${{ order.total_amount }}</td>
-              <td class="px-4 py-2">{{ order.order_date|date:"Y-m-d H:i" }}</td>
-              <td class="px-4 py-2 text-center">
-                <a href="{% url 'admin_order_detail' order.id %}" class="text-[#5D0E41] hover:underline font-medium">
-                  View
-                </a>
-              </td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="5" class="text-center text-gray-500 py-8 italic">
-                No orders found for the selected criteria.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <!-- Orders List -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for order in orders %}
+        <div class="bg-white border border-gray-200 rounded-xl shadow p-6 space-y-4">
+          <div class="flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-[#00224D]">Order #{{ order.id }}</h2>
+            <span class="px-3 py-1 rounded-full text-xs font-semibold {{ order.paid|yesno:'bg-green-100 text-green-700,bg-yellow-100 text-yellow-700' }}">
+              {{ order.paid|yesno:"Paid,Unpaid" }}
+            </span>
+          </div>
+
+          <p class="text-sm text-gray-600">
+            <span class="font-medium">Placed By:</span>
+            {% if order.user %}
+              {{ order.user.email }}
+            {% elif order.guest %}
+              Guest ({{ order.guest.email }})
+            {% endif %}
+          </p>
+
+          <p class="text-sm text-gray-600">
+            <span class="font-medium">Date:</span> {{ order.order_date|date:"Y-m-d H:i" }}
+          </p>
+
+          <p class="text-sm text-gray-600">
+            <span class="font-medium">Payment Method:</span> {{ order.get_payment_method_display }}
+          </p>
+
+          {% if order.address %}
+            <div class="text-sm text-gray-600">
+              <span class="font-medium block">Shipping Address:</span>
+              {{ order.address.full_name }}<br>
+              {{ order.address.street_address }}<br>
+              {{ order.address.city }}, {{ order.address.province }}<br>
+              {{ order.address.country }} - {{ order.address.zip_code }}<br>
+              Phone: {{ order.address.phone }}
+            </div>
+          {% endif %}
+
+          <div class="text-sm text-gray-600">
+            <span class="font-medium">Items:</span>
+            <ul class="space-y-2 mt-2">
+              {% for item in order.items.all %}
+                <li class="flex items-center space-x-4">
+                  {% if item.product.images.first %}
+                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.product_name }}" class="w-12 h-12 rounded object-cover border">
+                  {% endif %}
+                  <div class="flex-1">
+                    <p class="text-sm font-medium">{{ item.product.product_name }}</p>
+                    <p class="text-xs text-gray-500">Qty: {{ item.quantity }} × ${{ item.unit_price }}</p>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="pt-4">
+            <a href="{% url 'admin_order_detail' order.id %}" class="inline-block text-sm font-semibold text-[#5D0E41] hover:underline">
+              View Full Details →
+            </a>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-gray-500 italic col-span-full">No orders found.</p>
+      {% endfor %}
     </div>
   </div>
-
 </body>
 </html>

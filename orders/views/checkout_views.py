@@ -37,23 +37,26 @@ def cart_checkout(request):
             messages.error(request, 'Please select or provide a valid address.')
             return redirect("cart_checkout")
 
+        address = get_object_or_404(Address, id=request.session["selected_address_id"], user=request.user)
+        order = Order.create_from_cart(user=request.user, cart=cart, address=address)
+
+        # Stripe Payment Handling
         if payment_method == 'stripe':
             try:
-                address = get_object_or_404(Address, id=request.session["selected_address_id"])
-                order = Order.create_from_cart(user=request.user, cart=cart, address=address)
-                request.session.pop("selected_address_id", None)
-
                 session = order.create_stripe_session(
                     success_url=request.build_absolute_uri(reverse("order_success")),
                     cancel_url=request.build_absolute_uri(reverse("view_cart"))
                 )
+                request.session.pop("selected_address_id", None)
                 return redirect(session.url)
-
             except Exception as e:
-                messages.error(request, str(e))
+                messages.error(request, f"Payment failed: {e}")
                 return redirect("cart_checkout")
 
-        return redirect("place_cart_order")
+        # Cash on Delivery
+        request.session.pop("selected_address_id", None)
+        messages.success(request, "Order placed successfully!")
+        return redirect("order_history")
 
     return render(request, "orders/cart_checkout.html", {
         "cart_items": cart.items.all(),
@@ -65,6 +68,7 @@ def cart_checkout(request):
 
 @login_required
 def place_cart_order(request):
+    # This will only be used if you support delayed COD placing
     cart = Cart.objects.filter(user=request.user).first()
     address_id = request.session.get("selected_address_id")
 
@@ -76,13 +80,12 @@ def place_cart_order(request):
 
     try:
         Order.create_from_cart(user=request.user, cart=cart, address=address)
-        request.session.pop("selected_address_id", None)
         messages.success(request, "Order placed successfully!")
-        return redirect("order_history")
-
     except ValueError as e:
         messages.error(request, str(e))
-        return redirect("cart_checkout")
+
+    request.session.pop("selected_address_id", None)
+    return redirect("order_history")
 
 
 @login_required
@@ -96,10 +99,24 @@ def checkout_buy_now(request):
     product_id = request.session.get('buy_now_product_id')
     if not product_id:
         messages.error(request, "No product selected.")
-        return redirect("user_home")
+        return redirect("home")
 
     product = get_object_or_404(Product, id=product_id)
-    addresses = request.user.addresses.all()
+
+    addresses = request.user.addresses.all().order_by(
+        'full_name', 'street_address', 'zip_code', 'city', 'province', 'country', 'phone'
+    ).distinct()
+
+    seen = set()
+    unique_addresses = []
+    for addr in addresses:
+        key = (
+            addr.full_name, addr.street_address, addr.zip_code,
+            addr.city, addr.province, addr.country, addr.phone
+        )
+        if key not in seen:
+            seen.add(key)
+            unique_addresses.append(addr)
 
     if request.method == 'POST':
         payment_method = request.POST.get("payment_method")
@@ -121,28 +138,30 @@ def checkout_buy_now(request):
             messages.error(request, 'Please select or provide a valid address.')
             return redirect("checkout_buy_now")
 
+        address = get_object_or_404(Address, id=request.session["selected_address_id"], user=request.user)
+        order = Order.create_buy_now(user=request.user, product=product, address=address)
+
         if payment_method == 'stripe':
             try:
-                address = get_object_or_404(Address, id=request.session["selected_address_id"])
-                order = Order.create_buy_now(user=request.user, product=product, address=address)
-                request.session.pop("selected_address_id", None)
-                request.session.pop("buy_now_product_id", None)
-
                 session = order.create_stripe_session(
                     success_url=request.build_absolute_uri(reverse("order_success")),
-                    cancel_url=request.build_absolute_uri(reverse("user_home"))
+                    cancel_url=request.build_absolute_uri(reverse("home"))
                 )
+                request.session.pop("selected_address_id", None)
+                request.session.pop("buy_now_product_id", None)
                 return redirect(session.url)
-
             except Exception as e:
-                messages.error(request, str(e))
+                messages.error(request, f"Payment failed: {e}")
                 return redirect("checkout_buy_now")
 
-        return redirect("place_buy_now_order")
+        request.session.pop("selected_address_id", None)
+        request.session.pop("buy_now_product_id", None)
+        messages.success(request, "Buy Now order placed successfully!")
+        return redirect("order_history")
 
     return render(request, "orders/checkout_buy_now.html", {
         "product": product,
-        "addresses": addresses,
+        "addresses": unique_addresses,
     })
 
 
@@ -167,5 +186,9 @@ def place_buy_now_order(request):
 
     request.session.pop("buy_now_product_id", None)
     request.session.pop("selected_address_id", None)
-
     return redirect("order_history")
+
+
+@login_required
+def order_success(request):
+    return render(request, "products/user_home.html")

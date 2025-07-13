@@ -31,14 +31,16 @@
   <form method="post" class="space-y-6">
     {% csrf_token %}
 
-    {% if user_type == "logged_in" %}
+    {% if user.is_authenticated %}
       <!-- Saved Addresses -->
       <div>
         <h4 class="text-lg font-semibold mb-3 text-[#00224D]">Select a Saved Address:</h4>
         {% for address in addresses %}
-          <label class="block p-4 border border-gray-300 rounded-xl mb-3 bg-white shadow-sm hover:border-[#A0153E]">
+          <label class="block p-4 border border-gray-300 rounded-xl mb-3 bg-white shadow-sm hover:border-[#A0153E] cursor-pointer">
             <input type="radio" name="selected_address" value="{{ address.id }}" class="mr-2">
-            {{ address.street_address }}, {{ address.city }}, {{ address.province }}, {{ address.country }} - {{ address.zip_code }}
+            {{ address.full_name }}, {{ address.street_address }}, {{ address.city }}, {{ address.province }}, {{ address.country }} - {{ address.zip_code }}
+            <br>
+            Phone: {{ address.phone }}
           </label>
         {% empty %}
           <p class="text-sm text-gray-500 italic mb-4">You don’t have any saved addresses yet.</p>
@@ -46,22 +48,22 @@
       </div>
     {% endif %}
 
-    <!-- Guest Info / New Address -->
+    <!-- New Address or Guest Info -->
     <div class="bg-gray-100 p-5 rounded-xl border border-gray-200">
       <h4 class="text-lg font-semibold mb-4 text-[#00224D]">
-        {% if user_type == "guest" %}Shipping Information{% else %}Or Add a New Address:{% endif %}
+        {% if not user.is_authenticated %}Shipping Information{% else %}Or Add a New Address:{% endif %}
       </h4>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {% if user_type == "guest" %}
+        {% if not user.is_authenticated %}
           <input type="text" name="name" placeholder="Full Name" required class="border p-2 rounded">
           <input type="email" name="email" placeholder="Email Address" required class="border p-2 rounded">
           <input type="text" name="phone" placeholder="Phone Number" required class="border p-2 rounded">
         {% endif %}
-        <input type="text" name="street_address" placeholder="Street Address" required class="border p-2 rounded">
-        <input type="text" name="city" placeholder="City" required class="border p-2 rounded">
-        <input type="text" name="province" placeholder="Province" required class="border p-2 rounded">
-        <input type="text" name="country" placeholder="Country" required class="border p-2 rounded">
-        <input type="text" name="zip_code" placeholder="ZIP Code" required class="border p-2 rounded">
+        <input type="text" name="street_address" placeholder="Street Address" class="border p-2 rounded">
+        <input type="text" name="city" placeholder="City" class="border p-2 rounded">
+        <input type="text" name="province" placeholder="Province" class="border p-2 rounded">
+        <input type="text" name="country" placeholder="Country" class="border p-2 rounded">
+        <input type="text" name="zip_code" placeholder="ZIP Code" class="border p-2 rounded">
       </div>
     </div>
 
@@ -74,12 +76,13 @@
           Cash on Delivery
         </label>
         <label class="flex items-center">
-          <input type="radio" name="payment_method" value="online" class="mr-2">
+          <input type="radio" name="payment_method" value="stripe" class="mr-2">
           Online Payment
         </label>
       </div>
     </div>
 
+    <!-- Submit -->
     <button type="submit"
       class="w-full bg-[#B6F500] hover:bg-lime-400 text-black font-semibold py-2 rounded-xl transition">
       Place Order

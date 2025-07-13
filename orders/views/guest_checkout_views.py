@@ -1,10 +1,53 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.urls import reverse
-from decimal import Decimal
 from products.models import Product
 from orders.models import Order
+from accounts.models import GuestUser, Address
 
+# ===== Helpers =====
+
+def extract_guest_data(request):
+    return {
+        'name': request.POST.get('name'),
+        'email': request.POST.get('email'),
+        'phone': request.POST.get('phone'),
+    }
+
+def extract_address_data(request):
+    return {
+        'street_address': request.POST.get('street_address'),
+        'city': request.POST.get('city'),
+        'province': request.POST.get('province'),
+        'country': request.POST.get('country'),
+        'zip_code': request.POST.get('zip_code'),
+    }
+
+def process_guest_order(request, guest_info, address_data, cart_items, payment_method):
+    try:
+        order = Order.create_guest_order(
+            guest_data={**guest_info, **address_data, "payment_method": payment_method},
+            cart_items=cart_items
+        )
+
+        if payment_method == "cod":
+            return redirect("guest_order_success")
+
+        elif payment_method in ["stripe", "online"]:
+            success_url = request.build_absolute_uri(reverse("guest_order_success"))
+            cancel_url = request.build_absolute_uri(reverse("guest_cart_checkout"))
+            session = order.create_stripe_session(success_url, cancel_url)
+            return redirect(session.url)
+
+        messages.error(request, "Invalid payment method selected.")
+        return redirect("guest_cart_checkout")
+
+    except Exception as e:
+        messages.error(request, f"Error processing your order: {e}")
+        return redirect("guest_cart_checkout")
+
+
+# ===== Views =====
 
 def guest_cart_checkout(request):
     session_cart = request.session.get('cart', {})
@@ -12,35 +55,11 @@ def guest_cart_checkout(request):
         messages.error(request, "Your cart is empty.")
         return redirect('home')
 
-    cart_items = []
-    total_price = Decimal('0.00')
-
-    for pid, qty in session_cart.items():
-        try:
-            product = Product.objects.get(pk=pid)
-            subtotal = qty * product.price_per_piece
-            cart_items.append({
-                'product': product,
-                'quantity': qty,
-                'subtotal': subtotal,
-            })
-            total_price += subtotal
-        except Product.DoesNotExist:
-            continue
+    cart_items, total_price = Order.parse_guest_cart_items(session_cart)
 
     if request.method == 'POST':
-        guest_info = {
-            'name': request.POST.get('name'),
-            'email': request.POST.get('email'),
-            'phone': request.POST.get('phone'),
-        }
-        address_data = {
-            'street_address': request.POST.get('street_address'),
-            'city': request.POST.get('city'),
-            'province': request.POST.get('province'),
-            'country': request.POST.get('country'),
-            'zip_code': request.POST.get('zip_code'),
-        }
+        guest_info = extract_guest_data(request)
+        address_data = extract_address_data(request)
         payment_method = request.POST.get('payment_method')
 
         if not all(guest_info.values()) or not all(address_data.values()):
@@ -55,31 +74,7 @@ def guest_cart_checkout(request):
         }
 
         if payment_method == "online":
-            try:
-                items = []
-                for pid, qty in session_cart.items():
-                    product = Product.objects.get(pk=pid)
-                    items.append({
-                        'product': product,
-                        'quantity': qty,
-                        'unit_price': product.price_per_piece
-                    })
-
-                order = Order.create_guest_order(
-                    guest_data={**guest_info, **address_data},
-                    cart_items=items,
-                    skip_clear=True
-                )
-
-                session = order.create_stripe_session(
-                    success_url=request.build_absolute_uri(reverse("guest_order_success")),
-                    cancel_url=request.build_absolute_uri(reverse("guest_cart_checkout"))
-                )
-                return redirect(session.url)
-
-            except Exception as e:
-                messages.error(request, str(e))
-                return redirect('guest_cart_checkout')
+            return process_guest_order(request, guest_info, address_data, cart_items, payment_method)
 
         return redirect("place_cart_order_guest")
 
@@ -96,34 +91,17 @@ def place_cart_order_guest(request):
     guest_cart = session_data.get("cart", {})
     guest_info = session_data.get("guest_info", {})
     address_data = session_data.get("address", {})
+    payment_method = session_data.get("payment_method", "cod")
 
     if not guest_cart or not guest_info or not address_data:
         messages.error(request, "Incomplete guest checkout data.")
         return redirect("guest_cart_checkout")
 
-    try:
-        cart_items = []
-        for pid, qty in guest_cart.items():
-            product = Product.objects.get(pk=pid)
-            cart_items.append({
-                'product': product,
-                'quantity': qty,
-                'unit_price': product.price_per_piece,
-            })
-
-        Order.create_guest_order(
-            guest_data={**guest_info, **address_data},
-            cart_items=cart_items
-        )
-
-        request.session.pop("guest_checkout", None)
-        request.session.pop("cart", None)
-        messages.success(request, "Order placed successfully as guest.")
-        return redirect("guest_order_success")
-
-    except Exception as e:
-        messages.error(request, str(e))
-        return redirect("guest_cart_checkout")
+    cart_items, _ = Order.parse_guest_cart_items(guest_cart)
+    result = process_guest_order(request, guest_info, address_data, cart_items, payment_method)
+    request.session.pop("guest_checkout", None)
+    request.session.pop("cart", None)
+    return result
 
 
 def guest_buy_now(request, product_id):
@@ -137,83 +115,23 @@ def guest_buy_now(request, product_id):
 
 
 def guest_checkout_view(request):
-    cart_items = request.session.get("guest_cart", [])
+    cart_items_data = request.session.get("guest_cart", [])
 
-    if not cart_items:
+    if not cart_items_data:
         messages.error(request, "Your cart is empty.")
         return redirect("guest_cart_checkout")
 
+    cart_items, total_price = Order.parse_guest_cart_items(cart_items_data)
+
     if request.method == "POST":
-        guest_info = {
-            "name": request.POST.get("name"),
-            "email": request.POST.get("email"),
-            "phone": request.POST.get("phone"),
-        }
-        address_info = {
-            "street_address": request.POST.get("street_address"),
-            "city": request.POST.get("city"),
-            "province": request.POST.get("province"),
-            "country": request.POST.get("country"),
-            "zip_code": request.POST.get("zip_code"),
-        }
+        guest_info = extract_guest_data(request)
+        address_data = extract_address_data(request)
         payment_method = request.POST.get("payment_method")
-
-        parsed_items = []
-        for item in cart_items:
-            try:
-                product = Product.objects.get(id=item["product_id"])
-                quantity = int(item["quantity"])
-                if quantity > product.stock_quantity:
-                    messages.error(request, f"Not enough stock for {product.product_name}")
-                    return redirect("guest_cart_checkout")
-                parsed_items.append({
-                    "product": product,
-                    "quantity": quantity,
-                    "unit_price": product.price_per_piece,
-                })
-            except Product.DoesNotExist:
-                messages.error(request, "One of the products no longer exists.")
-                return redirect("guest_cart_checkout")
-
-        try:
-            order = Order.create_guest_order(
-                guest_data={**guest_info, **address_info},
-                cart_items=parsed_items
-            )
-
-            if payment_method == "cod":
-                return redirect("guest_order_success")
-
-            elif payment_method == "online":
-                success_url = request.build_absolute_uri(reverse("guest_order_success"))
-                cancel_url = request.build_absolute_uri(reverse("guest_cart_checkout"))
-                session = order.create_stripe_session(success_url, cancel_url)
-                return redirect(session.url)
-
-            else:
-                messages.error(request, "Invalid payment method selected.")
-                return redirect("guest_cart_checkout")
-
-        except Exception as e:
-            messages.error(request, f"Error processing your order: {e}")
-            return redirect("guest_cart_checkout")
-
-    context_items = []
-    total_price = 0
-    for item in cart_items:
-        product = Product.objects.get(id=item["product_id"])
-        quantity = item["quantity"]
-        subtotal = product.price_per_piece * quantity
-        context_items.append({
-            "product": product,
-            "quantity": quantity,
-            "subtotal": subtotal,
-        })
-        total_price += subtotal
+        return process_guest_order(request, guest_info, address_data, cart_items, payment_method)
 
     return render(request, 'orders/checkout_buy_now.html', {
-        'product': product,
-        'quantity': 1,
+        'product': cart_items[0]['product'],
+        'quantity': cart_items[0]['quantity'],
         'total_price': total_price,
         'addresses': [],
         'user_type': 'guest',

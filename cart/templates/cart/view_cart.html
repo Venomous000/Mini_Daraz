@@ -25,7 +25,7 @@
           <tr class="hover:bg-gray-50">
             <td class="px-4 py-3 border-b flex items-center space-x-4">
               {% if item.product.get_main_image_url %}
-                <img src="{{ item.product.get_main_image_url }}" alt="{{ item.product.product_name }}" class="w-14 h-14 rounded object-cover border">
+                <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.product_name }}" class="w-14 h-14 rounded object-cover border">
               {% else %}
                 <div class="w-14 h-14 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">No Image</div>
               {% endif %}
